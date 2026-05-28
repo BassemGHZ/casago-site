@@ -798,7 +798,7 @@ let appState = {
   page:'home',
   searchDest:'', searchCheckIn:'', searchCheckOut:'', searchGuests:2,
   selectedHotelId:null,
-  filters:{maxPrice:400,minRating:0,types:[],amenities:[]},
+  filters:{maxPrice:400,minRating:0,types:[],amenities:[]},filterExpanded:{types:false,amenities:false,ratings:false},
   sort:'recommended',
   checkIn:'', checkOut:'', rooms:1,
   confirmedBooking:null,
@@ -1534,28 +1534,63 @@ function buildResults(){
         <input type="range" min="40" max="400" value="${appState.filters.maxPrice}" oninput="updatePriceF(this.value)">
       </div>
       <!-- 2. Type -->
+      <!-- 2. Type de logement (expandable) -->
       <div class="f-section">
-        <div class="f-title">🏠 Type de logement</div>
-        ${['Hôtel','Appartement','Maison'].map(t=>`<div class="f-opt">
-          <input type="checkbox" ${appState.filters.types.includes(t)?'checked':''} onchange="toggleTypeF('${t}',this.checked)">
-          <label>${t}</label>
-        </div>`).join('')}
+        <div class="f-title" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleFilter('types')">
+          <span>🏠 Type de logement</span>
+          <span id="arrow-types" style="font-size:11px;transition:transform .2s;color:var(--gray-400);">▼</span>
+        </div>
+        <div id="filter-types">
+          ${(()=>{
+            const allTypes = ['Hôtel','Appartement','Maison','Villa','Studio','Chalet','Riad','Lodge','Insolite'];
+            const visibleCount = appState.filterExpanded?.types ? allTypes.length : 3;
+            const shown = allTypes.slice(0, visibleCount);
+            return shown.map(t=>'<div class="f-opt">'
+              +'<input type="checkbox" '+(appState.filters.types.includes(t)?'checked':'')+' onchange="toggleTypeF(\''+t+'\',this.checked)">'
+              +'<label>'+t+'</label></div>').join('')
+            + (allTypes.length > 3 ? '<button onclick="toggleFilterExpand(\'types\')" style="margin-top:6px;background:none;border:none;color:var(--blue-l);font-size:13px;font-weight:600;cursor:pointer;padding:0;display:flex;align-items:center;gap:4px;">'
+              +(appState.filterExpanded?.types ? '▲ Voir moins' : '▼ Voir '+(allTypes.length-3)+' de plus')+'</button>' : '');
+          })()}
+        </div>
       </div>
-      <!-- 3. Équipements -->
+
+      <!-- 3. Équipements (expandable) -->
       <div class="f-section">
-        <div class="f-title">🛎️ Équipements</div>
-        ${['Wi-Fi gratuit','Piscine','Parking','Restaurant','Spa'].map(a=>`<div class="f-opt">
-          <input type="checkbox" ${appState.filters.amenities.includes(a)?'checked':''} onchange="toggleAmenF('${a}',this.checked)">
-          <label>${a}</label>
-        </div>`).join('')}
+        <div class="f-title" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleFilter('amenities')">
+          <span>🛎️ Équipements</span>
+          <span id="arrow-amenities" style="font-size:11px;transition:transform .2s;color:var(--gray-400);">▼</span>
+        </div>
+        <div id="filter-amenities">
+          ${(()=>{
+            const allAmen = ['Wi-Fi gratuit','Piscine','Parking','Restaurant','Spa','Climatisation','Salle de sport','Animaux acceptés','Cuisine équipée','Vue mer'];
+            const visibleCount = appState.filterExpanded?.amenities ? allAmen.length : 3;
+            const shown = allAmen.slice(0, visibleCount);
+            return shown.map(a=>'<div class="f-opt">'
+              +'<input type="checkbox" '+(appState.filters.amenities.includes(a)?'checked':'')+' onchange="toggleAmenF(\''+a+'\',this.checked)">'
+              +'<label>'+a+'</label></div>').join('')
+            + (allAmen.length > 3 ? '<button onclick="toggleFilterExpand(\'amenities\')" style="margin-top:6px;background:none;border:none;color:var(--blue-l);font-size:13px;font-weight:600;cursor:pointer;padding:0;display:flex;align-items:center;gap:4px;">'
+              +(appState.filterExpanded?.amenities ? '▲ Voir moins' : '▼ Voir '+(allAmen.length-3)+' de plus')+'</button>' : '');
+          })()}
+        </div>
       </div>
-      <!-- 4. Note -->
+
+      <!-- 4. Note (expandable) -->
       <div class="f-section">
-        <div class="f-title">⭐ Note minimum</div>
-        ${[0,7,8,9].map(r=>`<div class="f-opt">
-          <input type="radio" name="rat" value="${r}" ${appState.filters.minRating==r?'checked':''} onchange="updateRatingF(${r})">
-          <label>${r===0?'Toutes':r+'/10 et +'}</label>
-        </div>`).join('')}
+        <div class="f-title" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleFilter('ratings')">
+          <span>⭐ Note minimum</span>
+          <span id="arrow-ratings" style="font-size:11px;transition:transform .2s;color:var(--gray-400);">▼</span>
+        </div>
+        <div id="filter-ratings">
+          ${(()=>{
+            const allRatings = [{v:0,l:'Toutes'},{v:6,l:'6/10 et +'},{v:7,l:'7/10 et +'},{v:8,l:'8/10 et +'},{v:9,l:'9/10 et +'}];
+            const visibleCount = appState.filterExpanded?.ratings ? allRatings.length : 3;
+            return allRatings.slice(0, visibleCount).map(r=>'<div class="f-opt">'
+              +'<input type="radio" name="rat" value="'+r.v+'" '+(appState.filters.minRating==r.v?'checked':'')+' onchange="updateRatingF('+r.v+')">'
+              +'<label>'+r.l+'</label></div>').join('')
+            + (allRatings.length > 3 ? '<button onclick="toggleFilterExpand(\'ratings\')" style="margin-top:6px;background:none;border:none;color:var(--blue-l);font-size:13px;font-weight:600;cursor:pointer;padding:0;display:flex;align-items:center;gap:4px;">'
+              +(appState.filterExpanded?.ratings ? '▲ Voir moins' : '▼ Voir '+(allRatings.length-3)+' de plus')+'</button>' : '');
+          })()}
+        </div>
       </div>
       <button onclick="resetFilters()" style="width:100%;margin-top:6px;padding:8px;border-radius:var(--r-md);background:var(--gray-100);border:1.5px solid var(--gray-300);font-size:14px;font-weight:600;cursor:pointer;color:var(--gray-700);">Réinitialiser</button>
     </aside>
@@ -1613,6 +1648,23 @@ function resultCardHTML(h){
 function updatePriceF(v){appState.filters.maxPrice=parseInt(v);document.getElementById('pv').textContent=v+'€';refreshResults();}
 function updateRatingF(v){appState.filters.minRating=v;refreshResults();}
 function toggleTypeF(t,c){if(c)appState.filters.types.push(t);else appState.filters.types=appState.filters.types.filter(x=>x!==t);refreshResults();}
+
+function toggleFilterExpand(section){
+  if(!appState.filterExpanded) appState.filterExpanded = {types:false,amenities:false,ratings:false};
+  appState.filterExpanded[section] = !appState.filterExpanded[section];
+  // Re-render just the filters panel (cheaper than full navigate)
+  navigate('results');
+}
+
+function toggleFilter(section){
+  // Collapse/expand the filter section body
+  const el = document.getElementById('filter-'+section);
+  const arrow = document.getElementById('arrow-'+section);
+  if(!el) return;
+  const collapsed = el.style.display === 'none';
+  el.style.display = collapsed ? 'block' : 'none';
+  if(arrow) arrow.style.transform = collapsed ? '' : 'rotate(-90deg)';
+}
 function toggleAmenF(a,c){if(c)appState.filters.amenities.push(a);else appState.filters.amenities=appState.filters.amenities.filter(x=>x!==a);refreshResults();}
 function updateSort(v){appState.sort=v;refreshResults();}
 function resetFilters(){appState.filters={maxPrice:400,minRating:0,types:[],amenities:[]};navigate('results');}
