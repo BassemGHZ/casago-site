@@ -3025,10 +3025,10 @@ function buildConfirm(){
 
         <!-- Bouton principal -->
         <button id="main-confirm-btn" class="btn-confirm" onclick="handleConfirmChoice(${h.id},${total})">
-          📨 Envoyer ma demande de réservation
+          ✅ Réserver — 💵 Paiement sur place
         </button>
         <p style="font-size:12px;color:var(--gray-500);text-align:center;margin-top:10px;">
-          📨 Votre demande sera transmise à l'hôte, qui dispose de 24h pour l'examiner.
+          📨 Votre demande sera transmise à l'hôte, qui dispose de 24h pour l'examiner. Aucun paiement en ligne — vous réglerez sur place.
         </p>
       </div>
     </div>
@@ -3061,11 +3061,11 @@ function selectPayMode(mode){
   const btn = document.getElementById('main-confirm-btn');
   if(btn){
     if(mode==='now'){
-      btn.textContent = '📨 Envoyer ma demande de réservation';
+      btn.textContent = '✅ Réserver — 💵 Paiement sur place';
       btn.style.background = 'var(--yellow)';
       btn.style.color      = 'var(--gray-900)';
     } else {
-      btn.textContent = '📨 Envoyer ma demande de réservation';
+      btn.textContent = '✅ Réserver — 💵 Paiement sur place';
       btn.style.background = 'var(--green)';
       btn.style.color      = '#fff';
     }
@@ -3118,7 +3118,7 @@ async function payOnSite(hId, total){
   const available = await checkAnnonceDatesAvailable(h.annonceId, appState.checkIn, appState.checkOut);
   if(!available){
     showToast('⛔ Ces dates viennent d\'être réservées par quelqu\'un d\'autre. Choisissez d\'autres dates.','var(--red)');
-    if(btn){btn.disabled=false;btn.innerHTML='📨 Envoyer ma demande de réservation';}
+    if(btn){btn.disabled=false;btn.innerHTML='✅ Réserver — 💵 Paiement sur place';}
     return;
   }
   if(btn){btn.innerHTML='<span class="spinner-sm"></span> Envoi…';}
@@ -3141,7 +3141,7 @@ async function payOnSite(hId, total){
     console.error('payOnSite error:', error.message);
     const conflict = error.code === '23P01' || /exclu|overlap/i.test(error.message||'');
     showToast(conflict ? '⛔ Ces dates viennent d\'être réservées par quelqu\'un d\'autre.' : "La demande n'a pas pu être envoyée : "+error.message,'var(--red)');
-    if(btn){btn.disabled=false;btn.innerHTML='📨 Envoyer ma demande de réservation';}
+    if(btn){btn.disabled=false;btn.innerHTML='✅ Réserver — 💵 Paiement sur place';}
     return;
   }
 
@@ -7936,6 +7936,7 @@ async function loadBookingRequests(container){
       const ci=req.checkIn?new Date(req.checkIn).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'—';
       const co=req.checkOut?new Date(req.checkOut).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'—';
       const nights=(req.checkIn&&req.checkOut)?Math.round((new Date(req.checkOut)-new Date(req.checkIn))/86400000):0;
+      const isExpiring = req.status==='en attente' && req.checkIn && new Date(req.checkIn) < new Date(new Date().toDateString());
       return `<div style="background:#fff;border:1px solid ${req.status==='en attente'?'#ffe0a0':'var(--gray-200)'};border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow='none'">
         ${req.status==='en attente'?'<div style="background:linear-gradient(90deg,#FFB400,#FFD666);height:4px;"></div>':''}
         <div style="padding:20px;">
@@ -7945,6 +7946,7 @@ async function loadBookingRequests(container){
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
                 <span style="font-size:16px;font-weight:700;">${req.guestName}</span>
                 <span style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:${statusBg[req.status]};color:${statusColor[req.status]};">${(statusLabel[req.status]||req.status).toUpperCase()}</span>
+                ${isExpiring?'<span style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:#fff0f0;color:var(--red);">⚠️ Date d\'arrivée dépassée — sera refusée automatiquement</span>':''}
               </div>
               <div style="font-size:13px;color:var(--blue-l);margin-bottom:8px;">${req.propertyEmoji} ${req.propertyName}</div>
               <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:10px;">
