@@ -8042,6 +8042,7 @@ async function loadExcursionBookingRequests(container){
     </div>`
     :list.map(req=>{
       const dt=req.date?new Date(req.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'—';
+      const isExpiring = req.status==='en attente' && req.date && new Date(req.date) < new Date(new Date().toDateString());
       return `<div style="background:#fff;border:1px solid ${req.status==='en attente'?'#ffe0a0':'var(--gray-200)'};border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow='none'">
         ${req.status==='en attente'?'<div style="background:linear-gradient(90deg,#FFB400,#FFD666);height:4px;"></div>':''}
         <div style="padding:20px;">
@@ -8051,6 +8052,7 @@ async function loadExcursionBookingRequests(container){
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
                 <span style="font-size:16px;font-weight:700;">${req.guestName}</span>
                 <span style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:${statusBg[req.status]};color:${statusColor[req.status]};">${(statusLabel[req.status]||req.status).toUpperCase()}</span>
+                ${isExpiring?'<span style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:#fff0f0;color:var(--red);">⚠️ Date dépassée — sera refusée automatiquement</span>':''}
               </div>
               <div style="font-size:13px;color:var(--blue-l);margin-bottom:8px;">✈️ ${req.excursionTitle}</div>
               <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;">
