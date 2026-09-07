@@ -1432,12 +1432,14 @@ async function handleLogin(){
   }
 
   const meta = data.user?.user_metadata || {};
+  const { data: prof } = await _sb.from('profiles').select('photo').eq('id', data.user.id).maybeSingle();
   auth.currentUser = {
     id: data.user.id,
     role: meta.role || 'user',
     firstName: meta.first_name || email.split('@')[0],
     lastName:  meta.last_name  || '',
     email:     data.user.email,
+    photo:     prof?.photo || null,
     emailVerified: true,
     createdAt: data.user.created_at?.split('T')[0] || '',
     bankData: { preferredMethod: 'virement' }
@@ -11125,15 +11127,17 @@ render();
 // rechargement de page "déconnecte" l'app même si la session Supabase (JWT en
 // localStorage) est toujours valide — d'où les formulaires qui se vident et
 // les vérifications "connectez-vous" qui réapparaissent à tort.
-_sb.auth.getSession().then(({ data: { session } }) => {
+_sb.auth.getSession().then(async ({ data: { session } }) => {
   if(session?.user && !auth.currentUser){
     const meta = session.user.user_metadata || {};
+    const { data: prof } = await _sb.from('profiles').select('photo').eq('id', session.user.id).maybeSingle();
     auth.currentUser = {
       id: session.user.id,
       role: meta.role || 'user',
       firstName: meta.first_name || session.user.email.split('@')[0],
       lastName:  meta.last_name  || '',
       email:     session.user.email,
+      photo:     prof?.photo || null,
       emailVerified: true,
       createdAt: session.user.created_at?.split('T')[0] || '',
       bankData: { preferredMethod: 'virement' }
@@ -11277,7 +11281,7 @@ loadPublishedExcursions();
 
 
 /* ===================== PHOTO PROFIL ===================== */
-function uploadProfilPhoto(event){
+async function uploadProfilPhoto(event){
   const file = event.target.files[0];
   if(!file) return;
   if(!file.type.startsWith('image/')){
@@ -11286,16 +11290,35 @@ function uploadProfilPhoto(event){
   if(file.size > 5*1024*1024){
     showToast('Image trop lourde (max 5 Mo)','var(--red)'); return;
   }
-  const reader = new FileReader();
-  reader.onload = function(e){
-    if(auth.currentUser) auth.currentUser.photo = e.target.result;
+  if(!auth.currentUser){
+    showToast('Connectez-vous pour modifier votre photo','var(--red)'); return;
+  }
+
+  showToast('⏳ Envoi de la photo…','var(--blue)');
+  try{
+    const extMatch = (file.name||'').match(/\.([a-zA-Z0-9]+)$/);
+    const ext = extMatch ? extMatch[1].toLowerCase() : 'jpg';
+    const path = auth.currentUser.id+'/avatar_'+Date.now()+'.'+ext;
+
+    const { error: upErr } = await _sb.storage.from('profile-photos').upload(path, file, { contentType: file.type||'image/jpeg', upsert: true });
+    if(upErr){ showToast('Erreur envoi : '+upErr.message,'var(--red)'); return; }
+
+    const { data: pub } = _sb.storage.from('profile-photos').getPublicUrl(path);
+    const url = pub?.publicUrl;
+    if(!url){ showToast('Erreur : URL de la photo introuvable','var(--red)'); return; }
+
+    const { error: dbErr } = await _sb.from('profiles').update({ photo: url }).eq('id', auth.currentUser.id);
+    if(dbErr){ showToast('Erreur sauvegarde : '+dbErr.message,'var(--red)'); return; }
+
+    auth.currentUser.photo = url;
     const i = auth.users.findIndex(u=>u.id===auth.currentUser.id);
-    if(i>=0) auth.users[i].photo = e.target.result;
+    if(i>=0) auth.users[i].photo = url;
+    renderAuthArea();
     navigate('profil');
-    showToast('Photo de profil mise à jour !','var(--green)');
-  };
-  reader.onerror = function(){ showToast('Erreur de lecture','var(--red)'); };
-  reader.readAsDataURL(file);
+    showToast('✅ Photo de profil mise à jour !','var(--green)');
+  } catch(e){
+    showToast('Erreur : '+e.message,'var(--red)');
+  }
 }
 
 /* ===================== LEAFLET MAPS ===================== */
