@@ -1062,7 +1062,7 @@ function renderAuthArea(){
                border-radius:30px;border:1.5px solid rgba(255,255,255,.3);transition:all .2s;"
         onmouseover="this.style.background='rgba(255,255,255,.15)';this.style.borderColor='rgba(255,255,255,.55)'"
         onmouseout="this.style.background='';this.style.borderColor='rgba(255,255,255,.3)'">
-      <div class="user-avatar" id="ua-btn">${u.firstName[0]}${u.lastName[0]}</div>
+      <div class="user-avatar" id="ua-btn">${u.photo?`<img src="${u.photo}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`:`${u.firstName[0]}${u.lastName[0]}`}</div>
       <div class="user-name" id="un-btn" style="display:flex;align-items:center;gap:7px;">
         Bonjour, ${u.firstName} !
         <span style="font-size:10px;opacity:.75;">▼</span>
